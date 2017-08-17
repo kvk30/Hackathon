@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+
+    <script >
+   window.fbAsyncInit = function() {
+     FB.init({
+      appId      : '145504142704959', // FB App ID
+      cookie     : true,  // enable cookies to allow the server to access the session
+      xfbml      : true,  // parse social plugins on this page
+      version    : 'v2.8' // use graph api version 2.8
+    });
+    
+    // Check whether the user already logged in
+    FB.getLoginStatus(function(response) {
+        if (response.status === 'connected') {
+            //display user data
+            getFbUserData();
+        }
+    });
+};
+(function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/sdk.js";
+    fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));
+
+// Facebook login with JavaScript SDK
+function fbLogin() {
+    FB.login(function (response) {
+        if (response.authResponse) {
+            // Get and display the user profile data
+            getFbUserData();
+        } else {
+            document.getElementById('status').innerHTML = 'User cancelled login or did not fully authorize.';
+        }
+    }, {scope: 'email'});
+}
+
+// Fetch the user profile data from facebook
+function getFbUserData(){
+    FB.api('/me', {locale: 'en_US', fields: 'id,first_name,last_name,email,link,gender,locale,picture'},
+    function (response) {
+        document.getElementById('fbLink').setAttribute("onclick","fbLogout()");
+        document.getElementById('fbLink').innerHTML = 'Logout from Facebook';
+        document.getElementById('status').innerHTML = 'Thanks for logging in, ' + response.first_name + '!';
+        document.getElementById('userData').innerHTML = '<p><b>FB ID:</b> '+response.id+'</p><p><b>Name:</b> '+response.first_name+' '+response.last_name+'</p><p><b>Email:</b> '+response.email+'</p><p><b>Gender:</b> '+response.gender+'</p><p><b>Locale:</b> '+response.locale+'</p><p><b>Picture:</b> <img src="'+response.picture.data.url+'"/></p><p><b>FB Profile:</b> <a target="_blank" href="'+response.link+'">click to view profile</a></p>';
+    });
+}
+
+// Logout from facebook
+function fbLogout() {
+    FB.logout(function() {
+        document.getElementById('fbLink').setAttribute("onclick","fbLogin()");
+        document.getElementById('fbLink').innerHTML = '<img src="fblogin.png"/>';
+        document.getElementById('userData').innerHTML = '';
+        document.getElementById('status').innerHTML = 'You have successfully logout from Facebook.';
+    });
+}
+    var t, tt;
+    var g_centerJSON ; 
+   var TokeJson;
+   function getToken(url, postData, callbackToken) {
+  var request = new XMLHttpRequest();
+
+  request.open('POST', url);
+
+  request.setRequestHeader('Accept', 'application/json');
+  request.setRequestHeader('ApiKey', '');
+     console.log(request.body);   
+  request.onreadystatechange = function () {
+      if (this.readyState === 4) {
+        console.log('Status:', this.status);
+        console.log('Headers:', this.getAllResponseHeaders());
+        console.log('Body:', this.responseText);
+    responseJSON = JSON.parse(this.responseText);
+    TokeJson = JSON.parse(this.responseText);
+    t = responseJSON.access_token;
+    tt = responseJSON.token_type;
+   // console.log("kvk" + t);
+    callbackToken(responseJSON);
+      }
+  };
+
+  request.send(postData);
+}
+
+function callAPI(verb, url, tokenJSON, postData = "", captureResponse) {
+  var authorization_header = tokenJSON.token_type + " " + tokenJSON.access_token;
+  var request = new XMLHttpRequest();
+
+  request.open(verb, url); //Open the stream with GET or POST
+
+  request.setRequestHeader('Accept', 'application/json');
+  request.setRequestHeader('Authorization', authorization_header);
+
+  request.onreadystatechange = function () {
+      if (this.readyState === 4) {
+    console.log("URL: ", url);
+        console.log('Status:', this.status);
+        console.log('Headers:', this.getAllResponseHeaders());
+        console.log('Body:', this.responseText);
+    responseJSON = JSON.parse(this.responseText);
+    console.log(responseJSON);
+    g_centerJSON = responseJSON;
+     var x = document.getElementById("ashwin")
+       // x.innerHTML =   ; 
+      var y = "";
+      for (var i = 0; i < responseJSON.Centers.length; i++) {
+        var m = responseJSON.Centers[i].id;
+        y += '<li> <a href = "#" onclick = "getavailabletime('  + i +  ')">'  + responseJSON.Centers[i].Name + '</a></li>' ; 
+      }
+      x.innerHTML = y;   
+      captureResponse(responseJSON);
+    }
+ };     
+  if (verb == "GET")
+    request.send();
+  else request.send(postData);
+//  console.log("kvk"); 
+}
+
+// Callback for CollectionsAPI call
+function captureCollectionAPIResponse(responseJSON) {
+
+  // console.log("Received: " + JSON.stringify(responseJSON));
+  // Any further action you want to perform on the collections API return
+}
+// Callback for getToken API result
+function callColllectionsAPI(tokenJSON) {
+  //console.log("Return value" + JSON.stringify(tokenJSON));
+  if (!tokenJSON)
+    console.log("Problem in getting Token");
+  else {
+    callUrl = "https://api.zenoti.com/api/Catalog/Centers";
+    callAPI("GET", callUrl, tokenJSON, "", captureCollectionAPIResponse);
+    
+  }
+   // console.log(captureCollectionAPIResponse);  
+}
+
+function getavailabletime(id)
+{
+  var centerid = g_centerJSON.Centers[id].Id;
+  var serviceid = "90065252-4b6e-40c6-aa1f-ee541142d5c6";
+  console.log("centerid" + centerid);
+  var authorization_header = TokeJson.token_type + " " + TokeJson.access_token;
+  var request = new XMLHttpRequest();
+  var url = "http://api.zenoti.com/api/Catalog/Appointments/AvailableTimes";
+  var verb = "POST";
+  request.open(verb, url); //Open the stream with GET or POST
+
+  //request.setRequestHeader('Accept', 'application/json');
+  request.setRequestHeader('Authorization', authorization_header);
+  var data = {
+  "RequiredSlotsCount": 10,
+  "CenterId": "7e9a5a8c-db49-48ed-a406-1732b38fd226",
+  "ReservationId": "string",
+  "CenterDate": "2017-08-17T18:22:05.033Z",
+  "SlotBookings": [
+    {
+      "GuestId": "string",
+      "AppointmentGroupId": "string",
+      "Services": [
+        {
+          "AppointmentId": "string",
+          "InvoiceItemId": "string",
+          "CartItemId": "string",
+          "AppointmentSegmentId": "string",
+          "PackageId": "string",
+          "Package": {
+            "Id": "string",
+            "Name": "string",
+            "Description": "string",
+            "Code": "string",
+            "Type": 1,
+            "Price": {
+              "CurrencyId": 0,
+              "Sales": 0,
+              "Tax": 0,
+              "Final": 0,
+              "Final1": 0,
+              "Discount": 0,
+              "Tip": 0,
+              "SSG": 0,
+              "RoundingCorrection": 0
+            },
+            "Services": [
+              {
+                "Id": "9e2a6f76-c513-4fc0-bfac-86d5fdfa1ea1",
+                "Name": "string",
+                "Price": {
+                  "CurrencyId": 0,
+                  "Sales": 0,
+                  "Tax": 0,
+                  "Final": 0,
+                  "Final1": 0,
+                  "Discount": 0,
+                  "Tip": 0,
+                  "SSG": 0,
+                  "RoundingCorrection": 0
+                },
+                "Duration": 0,
+                "CategoryId": "string",
+                "IsAddOn": true,
+                "HasAddOns": true,
+                "AddOnToServiceId": "string",
+                "CategoryName": "string",
+                "AddOns": [
+                  {}
+                ],
+                "IsVariant": true,
+                "HasVariant": true,
+                "ParentServiceId": "string"
+              }
+            ],
+            "Items": [
+              {
+                "Type": 1,
+                "Id": "string",
+                "Name": "string",
+                "Quantity": 0,
+                "Order": 0,
+                "Service": {
+                  "Id": "string",
+                  "Name": "string",
+                  "Price": {
+                    "CurrencyId": 0,
+                    "Sales": 0,
+                    "Tax": 0,
+                    "Final": 0,
+                    "Final1": 0,
+                    "Discount": 0,
+                    "Tip": 0,
+                    "SSG": 0,
+                    "RoundingCorrection": 0
+                  },
+                  "Duration": 0,
+                  "CategoryId": "string",
+                  "IsAddOn": true,
+                  "HasAddOns": true,
+                  "AddOnToServiceId": "string",
+                  "CategoryName": "string",
+                  "AddOns": [
+                    {}
+                  ],
+                  "IsVariant": true,
+                  "HasVariant": true,
+                  "ParentServiceId": "string"
+                }
+              }
+            ]
+          },
+          "Service": {
+            "Id": "9e2a6f76-c513-4fc0-bfac-86d5fdfa1ea1",
+            "Name": "string",
+            "Price": {
+              "CurrencyId": 0,
+              "Sales": 0,
+              "Tax": 0,
+              "Final": 0,
+              "Final1": 0,
+              "Discount": 0,
+              "Tip": 0,
+              "SSG": 0,
+              "RoundingCorrection": 0
+            },
+            "Duration": 0,
+            "CategoryId": "string",
+            "IsAddOn": true,
+            "HasAddOns": true,
+            "AddOnToServiceId": "string",
+            "CategoryName": "string",
+            "AddOns": [
+              {}
+            ],
+            "IsVariant": true,
+            "HasVariant": true,
+            "ParentServiceId": "string"
+          },
+          "RequestedTherapistGender": 0,
+          "StartTime": "2017-08-17T18:22:05.033Z",
+          "EndTime": "2017-08-18T18:22:05.033Z",
+          "StartTimeInCenter": "2017-08-17T18:22:05.033Z",
+          "EndTimeInCenter": "2017-08-17T18:22:05.033Z",
+          "Room": {
+            "Id": "string",
+            "Name": "string"
+          },
+          "Lock": true,
+          "Equipment": {
+            "Id": "string",
+            "Name": "string"
+          },
+          "Status": 0,
+          "RequestedTherapist": {
+            "Id": "string",
+            "ShortName": "string",
+            "NickName": "string",
+            "FullName": "string",
+            "Email": "string",
+            "PhoneNumber": "string",
+            "MobilePhoneModel": {
+              "CountryId": 0,
+              "Number": "string",
+              "DisplayNumber": "string"
+            },
+            "Gender": 0,
+            "FirstName": "string",
+            "LastName": "string",
+            "IsAvailable": true,
+            "VanityImageUrl": "string",
+            "ScalingFactor": 0,
+            "ScaledPrice": 0,
+            "ServiceTime": 0,
+            "DisplayName": "string"
+          },
+          "Quantity": 0,
+          "Price": {
+            "CurrencyId": 0,
+            "Sales": 0,
+            "Tax": 0,
+            "Final": 0,
+            "Final1": 0,
+            "Discount": 0,
+            "Tip": 0,
+            "SSG": 0,
+            "RoundingCorrection": 0
+          },
+          "SCD": "string",
+          "ActualStartTime": "2017-08-17T18:22:05.033Z",
+          "CompletedTime": "2017-08-17T18:22:05.033Z",
+          "Progress": 0,
+          "ParentAppointmentId": "string",
+          "ServiceCustomData": {
+            "Permission": {
+              "CanView": true,
+              "CanEdit": true
+            }
+          },
+          "ItemActions": "string",
+          "EquivalenceFactor": 0,
+          "EquivalentName": "string",
+          "IsMembershipApplied": true,
+          "IsAddOn": true,
+          "AddonAppointmentId": "string",
+          "IsPackageApplied": true,
+          "IsDiscountApplied": true,
+          "CanModifyTherapist": true
+        }
+      ],
+      "TherapistId": "string",
+      "RoomId": "string",
+      "Quantity": 0,
+      "BookingNotes": "string",
+      "Price": {
+        "CurrencyId": 0,
+        "Sales": 0,
+        "Tax": 0,
+        "Final": 0,
+        "Final1": 0,
+        "Discount": 0,
+        "Tip": 0,
+        "SSG": 0,
+        "RoundingCorrection": 0
+      },
+      "VirtualGuest": {
+        "FirstName": "string",
+        "LastName": "string",
+        "Email": "string",
+        "Mobile": {
+          "CountryId": 0,
+          "Number": "string",
+          "DisplayNumber": "string"
+        },
+        "Gender": 0
+      },
+      "CartItemIds": [
+        "string"
+      ]
+    }
+  ],
+  "AppointmentInterval": 0
+};
+var JS = JSON.stringify(data);
+console.log(data);
+console.log(JS);
+  request.send(JS);
+  request.onreadystatechange = function () {
+      if (this.readyState === 4) {
+    console.log("URL: ", url);
+        console.log('Status:', this.status);
+        console.log('Headers:', this.getAllResponseHeaders());
+        console.log('Body:', this.responseText);
+    responseJSON = JSON.parse(this.responseText);
+    console.log(responseJSON);
+  }
+   else
+    console.log("failed");
+};
+//request.send(centerid);
+}
+
+function TestAPIs() {
+  //debugger;
+  zgrant_type="password";
+  zclientname = "demo";
+  zpassword = "zenotirocks"
+  zusername = "gkim" // Change this with the password of this username
+  var postData = "grant_type=" + zgrant_type + "&username=" + zusername + "&password=" + zpassword + "&clientid=" + zclientname;
+  getToken("https://api.zenoti.com/Token", postData, callColllectionsAPI);
+        
+}
+
+    </script>
+
+
+
+  </head>
+
+
+  <body>
+    <h1>SPA TEST!</h1>
+    
+   <script>
+   TestAPIs();
+   </script> 
+	<!-- Display login status -->
+<div id="status"></div>
+
+<!-- Facebook login or logout button -->
+<a href="javascript:void(0);" onclick="fbLogin()" id="fbLink">fb login</a>
+
+<!-- Display user profile data -->
+<div id="userData"></div>
+  <div class="row">
+	  	<div class="col-sm-6">
+	  		<button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">CENTERS
+  			<span class="caret"></span></button>
+  			<ul class="dropdown-menu" id = "ashwin">
+    			<li><a href="#">HTML</a></li>
+    			<li><a href="#" >CSS</a></li>
+    			<li><a href="#">JavaScript</a></li>
+  			</ul>
+		</div>
+
+
+  		<div class="col-sm-6">
+  			<button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">TIMINGS
+  			<span class="caret"></span></button>
+  			<ul class="dropdown-menu">
+    			<li><a href="#">HTML</a></li>
+    			<li><a href="#">CSS</a></li>
+    			<li><a href="#">JavaScript</a></li>
+  			</ul>
+
+  		</div>
+  		
+	</div>
+	<p></p>
+	<div >
+		<button id="book" type="button" class="btn btn-success">BOOK</button>
+	</div>
+    
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
+  </body>
+</html>
