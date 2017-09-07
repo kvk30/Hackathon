@@ -428,7 +428,7 @@ function getavailabletime(id)
 var JS = JSON.stringify(data);
 console.log(data);
 console.log(JS);
-  request.send(JS);
+  //request.send(JS);
   request.onreadystatechange = function () {
       if (this.readyState === 4) {
     console.log("URL: ", url);
@@ -450,7 +450,8 @@ console.log(JS);
   }
    else
     console.log("failed");
-};
+  };
+  request.send(JS);
 //request.send(centerid);
 }
 
