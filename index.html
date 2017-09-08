@@ -85,6 +85,7 @@ function getFbUserData(){
         document.getElementById('lastname_input').value = response.last_name;
         document.getElementById('email_input').value = response.email;
         document.getElementById('gender_input').value = response.gender;
+        console.log(response.PhoneNumber); 
     });
 }
 
@@ -180,12 +181,15 @@ function callColllectionsAPI(tokenJSON) {
   
    // console.log(captureCollectionAPIResponse);  
 }
+function getpreviousbooking()
+{
 
+}
 function getavailabletime(id)
 {
   var centerid = g_centerJSON.Centers[id].Id;
   var serviceid = "90065252-4b6e-40c6-aa1f-ee541142d5c6";
-  console.log("centerid" + centerid);
+ // console.log("centerid" + centerid);
   var authorization_header = TokeJson.token_type + " " + TokeJson.access_token;
   var request = new XMLHttpRequest();
   var url = "https://api.zenoti.com/api/Catalog/Appointments/AvailableTimes";
